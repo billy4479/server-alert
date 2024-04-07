@@ -1,4 +1,4 @@
-import { Config } from '@planetscale/database';
+import { Client, createClient } from '@libsql/client';
 import { VercelRequest } from '@vercel/node';
 
 export function getRawBody(request: VercelRequest): Promise<Buffer> {
@@ -31,12 +31,11 @@ export function getEnv(name: string, required = true): string {
   return result;
 }
 
-export function dbConfig(): Config {
-  return {
-    host: getEnv('PS_HOST'),
-    username: getEnv('PS_USERNAME'),
-    password: getEnv('PS_PASSWORD'),
-  };
+export function getDB(): Client {
+  return createClient({
+    url: getEnv('TURSO_URL'),
+    authToken: getEnv('TURSO_TOKEN'),
+  });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

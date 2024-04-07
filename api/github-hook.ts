@@ -1,9 +1,8 @@
-import { connect } from '@planetscale/database';
 import * as crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Telegram } from 'telegraf';
 // eslint-disable-next-line object-curly-newline
-import { getEnv, dbConfig, getRawBody, Row } from './_utils.js';
+import { getEnv, getDB, getRawBody, Row } from './_utils.js';
 
 export default async (request: VercelRequest, response: VercelResponse) => {
   // Verify webhook: https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
@@ -35,24 +34,24 @@ export default async (request: VercelRequest, response: VercelResponse) => {
   // TODO: refine this
   const isOpen = message.includes('Acquiring lock');
 
-  const connection = connect(dbConfig());
+  const connection = getDB();
 
   if (isOpen) {
-    await connection.execute(
-      'UPDATE ServerStatus SET IsOpen = 1, LockHolder = ? WHERE Name = ?',
-      [username, repoName],
-    );
+    await connection.execute({
+      sql: 'UPDATE ServerStatus SET IsOpen = 1, LockHolder = ? WHERE Name = ?',
+      args: [username, repoName],
+    });
   } else {
-    await connection.execute(
-      'UPDATE ServerStatus SET IsOpen = 0, LockHolder = NULL WHERE Name = ?',
-      [repoName],
-    );
+    await connection.execute({
+      sql: 'UPDATE ServerStatus SET IsOpen = 0, LockHolder = NULL WHERE Name = ?',
+      args: [repoName],
+    });
   }
 
-  const result = await connection.execute(
-    'SELECT ChannelID FROM ServerStatus WHERE Name = ?',
-    [repoName],
-  );
+  const result = await connection.execute({
+    sql: 'SELECT ChannelID FROM ServerStatus WHERE Name = ?',
+    args: [repoName],
+  });
 
   if (result.rows.length !== 0) {
     const channelID: string | null = (result.rows[0] as Row).ChannelID;
