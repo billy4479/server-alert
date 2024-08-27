@@ -20,6 +20,9 @@ async function serverStatus(
     args: [serverName],
   });
   if (result.rows.length !== 1) {
+    if (result.rows.length === 0) {
+      sendHelpMessage(`server with name "${serverName}" not found`, bot, to);
+    }
     sendHelpMessage(
       `rows length is ${result.rows.length} instead of 1`,
       bot,
